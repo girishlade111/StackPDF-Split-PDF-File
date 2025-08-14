@@ -1,87 +1,554 @@
-{
-  "title": "StackPDF - Compress PDF Files Web App",
-  "metadata": {
-    "app_name": "StackPDF",
-    "type": "Single Page Web Application",
-    "primary_stack": {
-      "frontend": "HTML5, CSS3 (TailwindCSS), JavaScript (Vanilla or React)",
-      "backend": "Node.js with Express OR Serverless Functions (optional for advanced processing)",
-      "pdf_library": "pdf-lib or PDFKit for compression tasks",
-      "hosting": "Vercel, Netlify, or Firebase Hosting"
-    },
-    "style": "Minimal, modern, clean, responsive with dark/light theme"
-  },
-  "instructions": "Create a single-page web application named 'StackPDF' that allows users to compress PDF files with three different compression options: Extreme Compression (high compression, low quality), Recommended Compression (balanced quality and compression), and Less Compression (high quality, low compression). Include a responsive and intuitive user interface that works across all devices. Add a footer with links to your social media profiles, and allow users to download the compressed files easily. The app should be fast, responsive, and offer a dark/light theme toggle button.",
-  "example_prompt": {
-    "prompt": "Build a single-page web app called 'StackPDF' for compressing PDF files. The UI should feature a top navigation bar with StackPDF logo and tagline. Below the header, display a simple drag-and-drop file upload area and a file picker for uploading PDFs. After the file is uploaded, offer three compression modes: 1) Extreme Compression (lower quality, high compression), 2) Recommended Compression (balanced quality and compression), 3) Less Compression (higher quality, low compression). Each mode should have a corresponding button for the user to select, with a brief description next to it. Once the user selects a mode, display a 'Compress PDF' button that triggers the compression process. After the compression is done, the app should allow the user to download the compressed file instantly. The app should be fast, responsive, and support both desktop and mobile views. Add a footer with links to your social media profiles: Instagram (https://www.instagram.com/girish_lade_/), LinkedIn (https://www.linkedin.com/in/girish-lade-075bba201/), GitHub (https://github.com/girishlade111), Codepen (https://codepen.io/Girish-Lade-the-looper), and email: girishlade111@gmail.com. Implement dark/light mode toggle at the top for user preference."
-  },
-  "Required Features": [
-    "Drag-and-drop PDF upload area",
-    "File picker to select PDFs",
-    "Three compression modes: Extreme Compression, Recommended Compression, Less Compression",
-    "Descriptions for each compression mode",
-    "Compression button to process the file",
-    "Download compressed file button",
-    "Dark/Light theme toggle",
-    "Responsive design for mobile and desktop",
-    "Footer with social media links (Instagram, LinkedIn, GitHub, Codepen, Email)"
-  ],
-  "Additional Features": [
-    "Offline support via service worker",
-    "Real-time progress bar for compression",
-    "File validation (PDF format check)",
-    "Compression preview (show file size before and after compression)",
-    "Compression history in local storage (optional)"
-  ],
-  "Goals": "Provide an intuitive and fast way for users to compress PDF files while maintaining control over the compression quality and size. Optimize the app for mobile and desktop use with a clean, modern interface.",
-  "Target Audience": "Students, professionals, office workers, and anyone who needs to compress PDFs quickly and efficiently.",
-  "UI/UX specifics": [
-    "Clear and visually distinct buttons for each compression mode",
-    "Drag-and-drop upload zone with an easy-to-read label",
-    "Progress bar and feedback on compression process",
-    "Simple and responsive layout that adapts to mobile, tablet, and desktop views",
-    "Dark/light mode toggle button placed in the top-right corner",
-    "Footer with contact and social links"
-  ],
-  "Data Schema": {
-    "frontend": {
-      "uploadedFile": {
-        "fileName": "string",
-        "fileSize": "number",
-        "fileBlob": "Blob"
-      },
-      "compressionMode": "string", 
-      "compressedFile": {
-        "fileName": "string",
-        "fileSize": "number",
-        "fileBlob": "Blob"
-      }
-    },
-    "backend": {
-      "upload": "multipart/form-data with single PDF file",
-      "compress": "returns compressed PDF file"
-    }
-  },
-  "Authentication Flow": "No authentication required for basic compression. Optional login for saving history or advanced features (cloud save).",
-  "Performance/Security Requirements": [
-    "Client-side compression for files under 50MB",
-    "Backend fallback for larger files or advanced compression",
-    "Validate MIME type (application/pdf)",
-    "Ensure secure transfer via HTTPS"
-  ],
-  "Deployment Notes": [
-    "Frontend deploy on Vercel, Netlify, or Firebase",
-    "Backend (if used) deploy on Vercel Functions, Heroku, or AWS Lambda",
-    "Enable CORS if frontend and backend are separate"
-  ],
-  "Acceptance Criteria": [
-    "User can upload PDF files successfully",
-    "User can choose from three compression modes with clear descriptions",
-    "Compression process completes with visual feedback (progress bar)",
-    "Compressed file is available for download immediately after compression",
-    "App adapts to mobile, tablet, and desktop views",
-    "Dark/light theme toggle works correctly",
-    "Social media footer links are correct and functional"
-  ],
-  "notes": "Ensure the app is fast, with minimal delay during the compression process. Focus on high performance for small to medium-sized PDF files, and optimize the design for quick, intuitive use."
-}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackPDF - Split PDF File</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background-light: #f7fafc;
+            --text-light: #1a202c;
+            --background-dark: #1a202c;
+            --text-dark: #f7fafc;
+            --primary-color: #4f46e5;
+        }
+        html.light {
+            background-color: var(--background-light);
+            color: var(--text-light);
+        }
+        html.dark {
+            background-color: var(--background-dark);
+            color: var(--text-dark);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .upload-zone {
+            border: 2px dashed #d1d5db;
+            transition: all 0.3s ease;
+        }
+        .upload-zone.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+        .tab-button.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="transition-colors duration-300">
+
+    <div id="app" class="min-h-screen flex flex-col">
+
+        <!-- Header -->
+        <header class="py-4 px-6 md:px-12 shadow-md dark:bg-gray-800">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <svg class="h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 12h4" />
+                    </svg>
+                    <h1 class="text-2xl font-bold">StackPDF</h1>
+                </div>
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg id="theme-icon-light" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg id="theme-icon-dark" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto p-6 md:p-12">
+            <div id="upload-section" class="text-center">
+                <div id="upload-zone" class="upload-zone rounded-lg p-10 md:p-20 cursor-pointer">
+                    <input type="file" id="file-input" class="hidden" accept="application/pdf">
+                    <div class="flex flex-col items-center space-y-4">
+                        <svg class="w-16 h-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="text-lg font-medium">Drag & drop your PDF here</p>
+                        <p class="text-gray-500">or</p>
+                        <button id="browse-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition-colors">Browse File</button>
+                    </div>
+                </div>
+                <p id="file-info" class="mt-4 text-gray-600 dark:text-gray-400"></p>
+            </div>
+
+            <div id="processing-section" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Split Options</h2>
+                    <button id="reset-btn" class="text-sm text-indigo-600 hover:underline">Start Over</button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button id="tab-range" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm active">Split by Range</button>
+                        <button id="tab-pages" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Split by Pages</button>
+                        <button id="tab-size" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Split by Size</button>
+                    </nav>
+                </div>
+
+                <!-- Tab Panels -->
+                <div id="panel-range" class="tab-panel">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <input type="radio" id="range-custom" name="range-type" value="custom" checked class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                        <label for="range-custom">Custom range</label>
+                        <input type="radio" id="range-fixed" name="range-type" value="fixed" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                        <label for="range-fixed">Fixed ranges</label>
+                    </div>
+                    <div id="range-custom-options">
+                        <label for="from-page" class="block text-sm font-medium">From page</label>
+                        <input type="number" id="from-page" min="1" class="mt-1 block w-full md:w-1/4 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+                        <label for="to-page" class="block text-sm font-medium mt-2">To page</label>
+                        <input type="number" id="to-page" min="1" class="mt-1 block w-full md:w-1/4 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                    <div id="range-fixed-options" class="hidden">
+                        <label for="fixed-range-size" class="block text-sm font-medium">Split every</label>
+                        <div class="flex items-center">
+                           <input type="number" id="fixed-range-size" min="1" value="1" class="mt-1 block w-full md:w-1/4 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+                           <span class="ml-2">pages</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="panel-pages" class="tab-panel hidden">
+                    <label for="specific-pages" class="block text-sm font-medium">Select pages (e.g., 1,3,5-8)</label>
+                    <input type="text" id="specific-pages" placeholder="1, 3, 5-8" class="mt-1 block w-full md:w-1/2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div id="panel-size" class="tab-panel hidden">
+                    <label for="size-limit" class="block text-sm font-medium">Max file size (MB)</label>
+                     <input type="number" id="size-limit" min="1" value="5" class="mt-1 block w-full md:w-1/4 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600">
+                </div>
+
+                <!-- Page Preview -->
+                <div id="page-preview-container" class="mt-8 hidden">
+                    <h3 class="text-lg font-medium mb-4">Page Preview</h3>
+                    <div id="page-preview" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 max-h-96 overflow-y-auto p-4 bg-gray-100 dark:bg-gray-900 rounded-lg">
+                        <!-- Thumbnails will be injected here -->
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="mt-8 text-center">
+                    <button id="split-btn" class="w-full md:w-auto px-8 py-3 bg-indigo-600 text-white rounded-md font-semibold text-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Split PDF
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Loader -->
+            <div id="loader-section" class="hidden text-center py-10">
+                <div class="loader inline-block"></div>
+                <p id="loader-text" class="mt-4 text-lg font-medium">Processing...</p>
+            </div>
+
+            <!-- Download Section -->
+            <div id="download-section" class="hidden text-center">
+                <h2 class="text-2xl font-bold mb-6">Download Your Files</h2>
+                <div id="download-links" class="space-y-4 mb-6">
+                    <!-- Download links will be injected here -->
+                </div>
+                <button id="download-zip-btn" class="px-6 py-2 bg-green-600 text-white rounded-md font-semibold hover:bg-green-700 transition-colors">Download All as ZIP</button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-100 dark:bg-gray-800 py-8 mt-12">
+            <div class="container mx-auto text-center text-gray-600 dark:text-gray-400">
+                <div class="flex justify-center space-x-6 mb-4">
+                    <a href="https://www.instagram.com/girish_lade_/" target="_blank" class="hover:text-indigo-500">Instagram</a>
+                    <a href="https://www.linkedin.com/in/girish-lade-075bba201/" target="_blank" class="hover:text-indigo-500">LinkedIn</a>
+                    <a href="https://github.com/girishlade111" target="_blank" class="hover:text-indigo-500">GitHub</a>
+                    <a href="https://codepen.io/Girish-Lade-the-looper" target="_blank" class="hover:text-indigo-500">Codepen</a>
+                    <a href="mailto:girishlade111@gmail.com" class="hover:text-indigo-500">Email</a>
+                </div>
+                <p>&copy; 2025 LadeStack. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIconLight = document.getElementById('theme-icon-light');
+            const themeIconDark = document.getElementById('theme-icon-dark');
+            const uploadSection = document.getElementById('upload-section');
+            const uploadZone = document.getElementById('upload-zone');
+            const fileInput = document.getElementById('file-input');
+            const browseBtn = document.getElementById('browse-btn');
+            const fileInfo = document.getElementById('file-info');
+            const processingSection = document.getElementById('processing-section');
+            const resetBtn = document.getElementById('reset-btn');
+            const pagePreviewContainer = document.getElementById('page-preview-container');
+            const pagePreview = document.getElementById('page-preview');
+            const splitBtn = document.getElementById('split-btn');
+            const loaderSection = document.getElementById('loader-section');
+            const loaderText = document.getElementById('loader-text');
+            const downloadSection = document.getElementById('download-section');
+            const downloadLinks = document.getElementById('download-links');
+            const downloadZipBtn = document.getElementById('download-zip-btn');
+
+            // Tabs
+            const tabs = {
+                range: document.getElementById('tab-range'),
+                pages: document.getElementById('tab-pages'),
+                size: document.getElementById('tab-size'),
+            };
+            const panels = {
+                range: document.getElementById('panel-range'),
+                pages: document.getElementById('panel-pages'),
+                size: document.getElementById('panel-size'),
+            };
+
+            // Range options
+            const rangeCustomRadio = document.getElementById('range-custom');
+            const rangeFixedRadio = document.getElementById('range-fixed');
+            const rangeCustomOptions = document.getElementById('range-custom-options');
+            const rangeFixedOptions = document.getElementById('range-fixed-options');
+
+            // --- State ---
+            let uploadedFile = null;
+            let pdfDoc = null;
+            let activeTab = 'range';
+            let splitBlobs = [];
+
+            // --- PDF Lib ---
+            const { PDFDocument, rgb } = PDFLib;
+
+            // --- Theme Toggle ---
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                    themeIconLight.classList.add('hidden');
+                    themeIconDark.classList.remove('hidden');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                    themeIconDark.classList.add('hidden');
+                    themeIconLight.classList.remove('hidden');
+                }
+            };
+
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+                localStorage.setItem('theme', currentTheme);
+                applyTheme(currentTheme);
+            });
+
+            // Apply saved theme on load
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+
+
+            // --- File Upload ---
+            browseBtn.addEventListener('click', () => fileInput.click());
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                handleFile(e.dataTransfer.files[0]);
+            });
+
+            async function handleFile(file) {
+                if (!file || file.type !== 'application/pdf') {
+                    alert('Please select a valid PDF file.');
+                    return;
+                }
+                uploadedFile = file;
+                fileInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                uploadSection.classList.add('hidden');
+                loaderSection.classList.remove('hidden');
+                loaderText.textContent = 'Loading PDF...';
+
+                try {
+                    const fileBytes = await uploadedFile.arrayBuffer();
+                    pdfDoc = await PDFDocument.load(fileBytes);
+                    
+                    document.getElementById('from-page').max = pdfDoc.getPageCount();
+                    document.getElementById('to-page').max = pdfDoc.getPageCount();
+
+                    await renderPagePreviews();
+                    
+                    loaderSection.classList.add('hidden');
+                    processingSection.classList.remove('hidden');
+                    pagePreviewContainer.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Could not load the PDF file. It might be corrupted or protected.');
+                    resetApp();
+                }
+            }
+
+            // --- Page Previews ---
+            async function renderPagePreviews() {
+                pagePreview.innerHTML = '';
+                const pageCount = pdfDoc.getPageCount();
+
+                for (let i = 0; i < pageCount; i++) {
+                    const tempDoc = await PDFDocument.create();
+                    const [copiedPage] = await tempDoc.copyPages(pdfDoc, [i]);
+                    tempDoc.addPage(copiedPage);
+                    const pdfBytes = await tempDoc.save({ useObjectStreams: false });
+
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const pageElement = document.createElement('div');
+                    pageElement.className = 'relative group';
+                    pageElement.innerHTML = `
+                        <iframe src="${url}" class="w-full h-32 border-2 border-gray-300 dark:border-gray-600 rounded-md pointer-events-none"></iframe>
+                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-center text-xs py-1">${i + 1}</div>
+                    `;
+                    pagePreview.appendChild(pageElement);
+                }
+            }
+
+            // --- UI Logic ---
+            resetBtn.addEventListener('click', resetApp);
+
+            function resetApp() {
+                uploadedFile = null;
+                pdfDoc = null;
+                splitBlobs = [];
+                fileInput.value = '';
+                fileInfo.textContent = '';
+                uploadSection.classList.remove('hidden');
+                processingSection.classList.add('hidden');
+                loaderSection.classList.add('hidden');
+                downloadSection.classList.add('hidden');
+                pagePreviewContainer.classList.add('hidden');
+                pagePreview.innerHTML = '';
+                downloadLinks.innerHTML = '';
+            }
+            
+            // Tab switching
+            Object.keys(tabs).forEach(key => {
+                tabs[key].addEventListener('click', () => {
+                    activeTab = key;
+                    Object.keys(tabs).forEach(k => {
+                        tabs[k].classList.toggle('active', k === key);
+                        panels[k].classList.toggle('hidden', k !== key);
+                    });
+                });
+            });
+
+            // Range type switching
+            rangeCustomRadio.addEventListener('change', () => {
+                rangeCustomOptions.classList.remove('hidden');
+                rangeFixedOptions.classList.add('hidden');
+            });
+            rangeFixedRadio.addEventListener('change', () => {
+                rangeCustomOptions.classList.add('hidden');
+                rangeFixedOptions.classList.remove('hidden');
+            });
+
+            // --- Splitting Logic ---
+            splitBtn.addEventListener('click', async () => {
+                if (!pdfDoc) return;
+
+                processingSection.classList.add('hidden');
+                loaderSection.classList.remove('hidden');
+                loaderText.textContent = 'Splitting PDF...';
+                splitBlobs = [];
+
+                try {
+                    switch (activeTab) {
+                        case 'range':
+                            await splitByRange();
+                            break;
+                        case 'pages':
+                            await splitByPages();
+                            break;
+                        case 'size':
+                            await splitBySize();
+                            break;
+                    }
+                    displayDownloadLinks();
+                } catch (error) {
+                    console.error('Error splitting PDF:', error);
+                    alert(`An error occurred during splitting: ${error.message}`);
+                    resetApp();
+                } finally {
+                    loaderSection.classList.add('hidden');
+                }
+            });
+
+            async function createAndSavePdf(pageIndices, partName) {
+                const newDoc = await PDFDocument.create();
+                const copiedPages = await newDoc.copyPages(pdfDoc, pageIndices);
+                copiedPages.forEach(page => newDoc.addPage(page));
+                const pdfBytes = await newDoc.save();
+                splitBlobs.push({
+                    name: `${uploadedFile.name.replace('.pdf', '')}-${partName}.pdf`,
+                    blob: new Blob([pdfBytes], { type: 'application/pdf' })
+                });
+            }
+
+            async function splitByRange() {
+                const rangeType = document.querySelector('input[name="range-type"]:checked').value;
+                const totalPages = pdfDoc.getPageCount();
+
+                if (rangeType === 'custom') {
+                    const from = parseInt(document.getElementById('from-page').value) || 1;
+                    const to = parseInt(document.getElementById('to-page').value) || totalPages;
+                    if (from > to || from < 1 || to > totalPages) {
+                        throw new Error('Invalid page range.');
+                    }
+                    const indices = Array.from({ length: to - from + 1 }, (_, i) => from + i - 1);
+                    await createAndSavePdf(indices, `pages-${from}-${to}`);
+                } else { // fixed
+                    const size = parseInt(document.getElementById('fixed-range-size').value) || 1;
+                    if (size < 1) throw new Error('Fixed range size must be at least 1.');
+                    for (let i = 0; i < totalPages; i += size) {
+                        const start = i;
+                        const end = Math.min(i + size, totalPages);
+                        const indices = Array.from({ length: end - start }, (_, j) => start + j);
+                        await createAndSavePdf(indices, `part-${Math.floor(i / size) + 1}`);
+                    }
+                }
+            }
+
+            async function splitByPages() {
+                const pagesStr = document.getElementById('specific-pages').value;
+                if (!pagesStr) throw new Error('Please enter page numbers or ranges.');
+
+                const pageIndices = new Set();
+                const totalPages = pdfDoc.getPageCount();
+
+                const parts = pagesStr.split(',');
+                for (const part of parts) {
+                    if (part.includes('-')) {
+                        const [start, end] = part.split('-').map(Number);
+                        if (isNaN(start) || isNaN(end) || start > end || start < 1 || end > totalPages) {
+                            throw new Error(`Invalid range: ${part}`);
+                        }
+                        for (let i = start; i <= end; i++) {
+                            pageIndices.add(i - 1);
+                        }
+                    } else {
+                        const page = Number(part);
+                        if (isNaN(page) || page < 1 || page > totalPages) {
+                            throw new Error(`Invalid page number: ${part}`);
+                        }
+                        pageIndices.add(page - 1);
+                    }
+                }
+                
+                const sortedIndices = Array.from(pageIndices).sort((a, b) => a - b);
+                await createAndSavePdf(sortedIndices, 'custom-pages');
+            }
+            
+            async function splitBySize() {
+                // This is a complex approximation. pdf-lib doesn't have a direct way to measure
+                // byte size of pages before saving. We'll split page by page and check size.
+                // This can be slow for large documents.
+                loaderText.textContent = 'Splitting by size (this might take a while)...';
+                const sizeLimitMB = parseFloat(document.getElementById('size-limit').value) || 5;
+                const sizeLimitBytes = sizeLimitMB * 1024 * 1024;
+                const totalPages = pdfDoc.getPageCount();
+                
+                let currentChunkIndices = [];
+                let part = 1;
+
+                for (let i = 0; i < totalPages; i++) {
+                    currentChunkIndices.push(i);
+                    // Create a temporary doc to estimate size
+                    const tempDoc = await PDFDocument.create();
+                    const copiedPages = await tempDoc.copyPages(pdfDoc, currentChunkIndices);
+                    copiedPages.forEach(page => tempDoc.addPage(page));
+                    const pdfBytes = await tempDoc.save();
+
+                    if (pdfBytes.length > sizeLimitBytes) {
+                        // The last added page pushed it over the limit.
+                        // Save the chunk without the last page.
+                        const finalChunkIndices = currentChunkIndices.slice(0, -1);
+                        if (finalChunkIndices.length > 0) {
+                            await createAndSavePdf(finalChunkIndices, `part-${part++}`);
+                        }
+                        // Start a new chunk with the oversized page.
+                        currentChunkIndices = [i];
+                    }
+                }
+
+                // Save the last remaining chunk
+                if (currentChunkIndices.length > 0) {
+                    await createAndSavePdf(currentChunkIndices, `part-${part++}`);
+                }
+            }
+
+
+            // --- Download Logic ---
+            function displayDownloadLinks() {
+                downloadLinks.innerHTML = '';
+                splitBlobs.forEach((item, index) => {
+                    const url = URL.createObjectURL(item.blob);
+                    const linkEl = document.createElement('a');
+                    linkEl.href = url;
+                    linkEl.download = item.name;
+                    linkEl.className = "block bg-gray-200 dark:bg-gray-700 p-3 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors";
+                    linkEl.textContent = `Download ${item.name} (${(item.blob.size / 1024).toFixed(2)} KB)`;
+                    downloadLinks.appendChild(linkEl);
+                });
+                downloadSection.classList.remove('hidden');
+            }
+
+            downloadZipBtn.addEventListener('click', async () => {
+                if (splitBlobs.length === 0) return;
+                
+                loaderSection.classList.remove('hidden');
+                loaderText.textContent = 'Creating ZIP file...';
+                
+                const zip = new JSZip();
+                splitBlobs.forEach(item => {
+                    zip.file(item.name, item.blob);
+                });
+
+                zip.generateAsync({ type: "blob" })
+                    .then(function(content) {
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(content);
+                        link.download = `${uploadedFile.name.replace('.pdf', '')}-split.zip`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        loaderSection.classList.add('hidden');
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
