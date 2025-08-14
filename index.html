@@ -1,0 +1,87 @@
+{
+  "title": "StackPDF - Compress PDF Files Web App",
+  "metadata": {
+    "app_name": "StackPDF",
+    "type": "Single Page Web Application",
+    "primary_stack": {
+      "frontend": "HTML5, CSS3 (TailwindCSS), JavaScript (Vanilla or React)",
+      "backend": "Node.js with Express OR Serverless Functions (optional for advanced processing)",
+      "pdf_library": "pdf-lib or PDFKit for compression tasks",
+      "hosting": "Vercel, Netlify, or Firebase Hosting"
+    },
+    "style": "Minimal, modern, clean, responsive with dark/light theme"
+  },
+  "instructions": "Create a single-page web application named 'StackPDF' that allows users to compress PDF files with three different compression options: Extreme Compression (high compression, low quality), Recommended Compression (balanced quality and compression), and Less Compression (high quality, low compression). Include a responsive and intuitive user interface that works across all devices. Add a footer with links to your social media profiles, and allow users to download the compressed files easily. The app should be fast, responsive, and offer a dark/light theme toggle button.",
+  "example_prompt": {
+    "prompt": "Build a single-page web app called 'StackPDF' for compressing PDF files. The UI should feature a top navigation bar with StackPDF logo and tagline. Below the header, display a simple drag-and-drop file upload area and a file picker for uploading PDFs. After the file is uploaded, offer three compression modes: 1) Extreme Compression (lower quality, high compression), 2) Recommended Compression (balanced quality and compression), 3) Less Compression (higher quality, low compression). Each mode should have a corresponding button for the user to select, with a brief description next to it. Once the user selects a mode, display a 'Compress PDF' button that triggers the compression process. After the compression is done, the app should allow the user to download the compressed file instantly. The app should be fast, responsive, and support both desktop and mobile views. Add a footer with links to your social media profiles: Instagram (https://www.instagram.com/girish_lade_/), LinkedIn (https://www.linkedin.com/in/girish-lade-075bba201/), GitHub (https://github.com/girishlade111), Codepen (https://codepen.io/Girish-Lade-the-looper), and email: girishlade111@gmail.com. Implement dark/light mode toggle at the top for user preference."
+  },
+  "Required Features": [
+    "Drag-and-drop PDF upload area",
+    "File picker to select PDFs",
+    "Three compression modes: Extreme Compression, Recommended Compression, Less Compression",
+    "Descriptions for each compression mode",
+    "Compression button to process the file",
+    "Download compressed file button",
+    "Dark/Light theme toggle",
+    "Responsive design for mobile and desktop",
+    "Footer with social media links (Instagram, LinkedIn, GitHub, Codepen, Email)"
+  ],
+  "Additional Features": [
+    "Offline support via service worker",
+    "Real-time progress bar for compression",
+    "File validation (PDF format check)",
+    "Compression preview (show file size before and after compression)",
+    "Compression history in local storage (optional)"
+  ],
+  "Goals": "Provide an intuitive and fast way for users to compress PDF files while maintaining control over the compression quality and size. Optimize the app for mobile and desktop use with a clean, modern interface.",
+  "Target Audience": "Students, professionals, office workers, and anyone who needs to compress PDFs quickly and efficiently.",
+  "UI/UX specifics": [
+    "Clear and visually distinct buttons for each compression mode",
+    "Drag-and-drop upload zone with an easy-to-read label",
+    "Progress bar and feedback on compression process",
+    "Simple and responsive layout that adapts to mobile, tablet, and desktop views",
+    "Dark/light mode toggle button placed in the top-right corner",
+    "Footer with contact and social links"
+  ],
+  "Data Schema": {
+    "frontend": {
+      "uploadedFile": {
+        "fileName": "string",
+        "fileSize": "number",
+        "fileBlob": "Blob"
+      },
+      "compressionMode": "string", 
+      "compressedFile": {
+        "fileName": "string",
+        "fileSize": "number",
+        "fileBlob": "Blob"
+      }
+    },
+    "backend": {
+      "upload": "multipart/form-data with single PDF file",
+      "compress": "returns compressed PDF file"
+    }
+  },
+  "Authentication Flow": "No authentication required for basic compression. Optional login for saving history or advanced features (cloud save).",
+  "Performance/Security Requirements": [
+    "Client-side compression for files under 50MB",
+    "Backend fallback for larger files or advanced compression",
+    "Validate MIME type (application/pdf)",
+    "Ensure secure transfer via HTTPS"
+  ],
+  "Deployment Notes": [
+    "Frontend deploy on Vercel, Netlify, or Firebase",
+    "Backend (if used) deploy on Vercel Functions, Heroku, or AWS Lambda",
+    "Enable CORS if frontend and backend are separate"
+  ],
+  "Acceptance Criteria": [
+    "User can upload PDF files successfully",
+    "User can choose from three compression modes with clear descriptions",
+    "Compression process completes with visual feedback (progress bar)",
+    "Compressed file is available for download immediately after compression",
+    "App adapts to mobile, tablet, and desktop views",
+    "Dark/light theme toggle works correctly",
+    "Social media footer links are correct and functional"
+  ],
+  "notes": "Ensure the app is fast, with minimal delay during the compression process. Focus on high performance for small to medium-sized PDF files, and optimize the design for quick, intuitive use."
+}
